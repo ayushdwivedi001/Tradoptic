@@ -1,0 +1,9 @@
+﻿__pycache__/
+*.pyc
+venv/
+NSE_cookies.json
+*.log
+.DS_Store
+.vscode/
+NSE_Live_Terminal.xlsx
+Live_NIFTY50_Data.xlsx
