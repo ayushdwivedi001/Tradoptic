@@ -4,10 +4,9 @@ from nse_scraper import scraper_instance
 
 app = FastAPI(title="NSE Live Dashboard API")
 
-# Configure CORS for React frontend
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"], # For development
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -21,17 +20,32 @@ def startup_event():
 def shutdown_event():
     scraper_instance.stop()
 
-@app.get("/api/market/nifty50")
-def get_nifty50():
-    if not scraper_instance.nifty_data:
-        # Provide some dummy fallback data if NSE is blocking during dev
-        # return {"status": "error", "message": "Data not available yet or blocked."}
-        pass
-        
+@app.get("/api/indices")
+def get_indices():
+    return {
+        "status": "success",
+        "indices": scraper_instance.available_indices
+    }
+
+@app.get("/api/market/index/{index_name}")
+def get_index_data(index_name: str):
+    index_data = scraper_instance.nifty_data.get(index_name)
+    if not index_data:
+        return {"status": "error", "message": f"No data available for {index_name}"}
     return {
         "status": "success",
         "last_updated": scraper_instance.last_updated,
-        "data": scraper_instance.nifty_data
+        "data": index_data
+    }
+
+@app.get("/api/market/nifty50")
+def get_nifty50():
+    if not scraper_instance.nifty_data.get("NIFTY 50"):
+        pass
+    return {
+        "status": "success",
+        "last_updated": scraper_instance.last_updated,
+        "data": scraper_instance.nifty_data.get("NIFTY 50", [])
     }
 
 @app.get("/api/options/{index_symbol}")

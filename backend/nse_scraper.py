@@ -8,13 +8,29 @@ from playwright.sync_api import sync_playwright
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+NIFTY_INDICES = [
+    ("NIFTY 50", "NIFTY%2050"),
+    ("NIFTY BANK", "NIFTY%20BANK"),
+    ("NIFTY IT", "NIFTY%20IT"),
+    ("NIFTY AUTO", "NIFTY%20AUTO"),
+    ("NIFTY PHARMA", "NIFTY%20PHARMA"),
+    ("NIFTY FMCG", "NIFTY%20FMCG"),
+    ("NIFTY METAL", "NIFTY%20METAL"),
+    ("NIFTY ENERGY", "NIFTY%20ENERGY"),
+    ("NIFTY MEDIA", "NIFTY%20MEDIA"),
+    ("NIFTY PSU BANK", "NIFTY%20PSU%20BANK"),
+    ("NIFTY Finance", "NIFTY%20Finance"),
+    ("NIFTY Realty", "NIFTY%20Realty"),
+]
+
 class NSEScraper:
     def __init__(self):
-        self.nifty_data = []
+        self.nifty_data = {}
         self.options_data = {"NIFTY": {"df": [], "underlying_val": 0}}
         self.trading_signals = []
         self.is_fetching = False
         self.last_updated = 0
+        self.available_indices = [idx[0] for idx in NIFTY_INDICES]
         
         self.base_headers = {
             "Accept-Language": "en-US,en;q=0.9",
@@ -34,8 +50,9 @@ class NSEScraper:
         except (ValueError, TypeError):
             return 0.0
 
-    def fetch_equity_data(self):
-        api_url = "https://www.nseindia.com/api/equity-stockIndices?index=NIFTY%2050"
+    def fetch_equity_data(self, index_name="NIFTY 50", index_param=None):
+        index_param = index_param or index_name.replace(" ", "%20")
+        api_url = f"https://www.nseindia.com/api/equity-stockIndices?index={index_param}"
         page_url = "https://www.nseindia.com/market-data/live-equity-market"
         
         try:
@@ -46,7 +63,6 @@ class NSEScraper:
 
             resp = self.session.get(api_url, headers=headers, timeout=15)
             if resp.status_code != 200 or not resp.json():
-                # Equity API is less strict, a simple homepage ping often unsticks it
                 self.session.get("https://www.nseindia.com", timeout=10)
                 resp = self.session.get(api_url, headers=headers, timeout=15)
 
@@ -55,9 +71,13 @@ class NSEScraper:
             
             processed = []
             for stock in stocks:
-                if stock.get("symbol") == "NIFTY 50": continue
+                symbol = stock.get("symbol", "")
+                if index_name == "NIFTY 50" and symbol == "NIFTY 50":
+                    continue
+                if not symbol:
+                    continue
                 processed.append({
-                    "Symbol": stock.get("symbol", ""),
+                    "Symbol": symbol,
                     "LTP": self.clean_float(stock.get("lastPrice")),
                     "% Chg": self.clean_float(stock.get("pChange")),
                     "Volume": self.clean_float(stock.get("totalTradedVolume")),
@@ -68,10 +88,10 @@ class NSEScraper:
                 })
             
             if processed:
-                self.nifty_data = processed
+                self.nifty_data[index_name] = processed
             return True
         except Exception as e:
-            logger.error(f"Equity Request error: {e}")
+            logger.error(f"Equity Request error for {index_name}: {e}")
             return False
 
     def _ensure_browser(self):
@@ -267,14 +287,17 @@ class NSEScraper:
             self.page = None
             
             while self.is_fetching:
-                logger.info("Syncing Market Data...")
-                self.fetch_equity_data()
+                logger.info("Syncing Market Data for all indices...")
+                
+                for index_name, index_param in NIFTY_INDICES:
+                    self.fetch_equity_data(index_name, index_param)
+                    time.sleep(2)
+                
                 if self.fetch_option_chain_via_dom("NIFTY"):
                     self.calculate_signals("NIFTY")
                 self.last_updated = time.time()
                 time.sleep(60)
                 
-            # Cleanup when stopping
             if self.browser:
                 try: self.browser.close()
                 except: pass

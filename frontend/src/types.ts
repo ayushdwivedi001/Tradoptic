@@ -17,6 +17,11 @@ export interface MarketDataResponse {
   status: string;
 }
 
+export interface IndexList {
+  status: string;
+  indices: string[];
+}
+
 export interface OptionsRow {
   "Strike Price": number;
   "Call OI": number;

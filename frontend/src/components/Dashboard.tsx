@@ -6,7 +6,7 @@ import EquityHeatmap from './EquityHeatmap';
 import OIAnalysisTable from './OIAnalysisTable';
 import TradingSignalCard from './TradingSignalCard';
 import MarketBreadthSummary from './MarketBreadthSummary';
-import type { ActiveTab, MarketData, OptionsRow, SignalData } from '../types';
+import type { ActiveTab, MarketData, OptionsRow, SignalData, IndexList } from '../types';
 
 const API_BASE_URL = 'http://localhost:8000/api';
 
@@ -23,6 +23,8 @@ const Dashboard: React.FC<DashboardProps> = ({ activeTab }) => {
   const [error, setError] = useState<string | null>(null);
   const [lastUpdated, setLastUpdated] = useState<string>('');
   const [dataTimestamp, setDataTimestamp] = useState<number>(0);
+  const [availableIndices, setAvailableIndices] = useState<string[]>(['NIFTY 50']);
+  const [selectedIndex, setSelectedIndex] = useState<string>('NIFTY 50');
 
   const marketBreadth = useMemo(() => {
     if (marketData.length === 0) return null;
@@ -49,12 +51,26 @@ const Dashboard: React.FC<DashboardProps> = ({ activeTab }) => {
   }, [marketData]);
 
 useEffect(() => {
+    const fetchIndices = async () => {
+      try {
+        const indicesRes = await axios.get<IndexList>(`${API_BASE_URL}/indices`);
+        if (indicesRes.data.status === 'success') {
+          setAvailableIndices(indicesRes.data.indices || ['NIFTY 50']);
+        }
+      } catch (err) {
+        console.warn('Failed to fetch indices list:', err);
+      }
+    };
+    fetchIndices();
+  }, []);
+
+  useEffect(() => {
     let isMounted = true;
     const fetchData = async () => {
       try {
         setLoading(true);
         const [niftyRes, optionsRes, signalsRes] = await Promise.all([
-          axios.get(`${API_BASE_URL}/market/nifty50`),
+          axios.get(`${API_BASE_URL}/market/index/${encodeURIComponent(selectedIndex)}`),
           axios.get(`${API_BASE_URL}/options/NIFTY`),
           axios.get(`${API_BASE_URL}/signals`)
         ]);
@@ -69,7 +85,7 @@ useEffect(() => {
             setDataTimestamp(timestamp);
           }
         } else {
-          console.warn('Nifty50 API returned non-success status:', niftyRes.data);
+          console.warn('Market API returned non-success status:', niftyRes.data);
         }
         
         if (optionsRes.data.status === 'success') {
@@ -102,7 +118,7 @@ useEffect(() => {
       isMounted = false;
       clearInterval(interval);
     };
-  }, []);
+  }, [selectedIndex]);
 
   if (loading) {
     return (
@@ -144,8 +160,19 @@ useEffect(() => {
         return (
           <div className="h-full flex flex-col">
             <div className="flex-1 bg-card border border-border rounded-xl shadow-sm flex flex-col overflow-hidden">
-              <div className="px-6 py-4 border-b border-border">
-                <h2 className="font-semibold text-lg">NIFTY 50 Heatmap</h2>
+              <div className="px-6 py-4 border-b border-border flex justify-between items-center">
+                <div className="flex items-center gap-3">
+                  <h2 className="font-semibold text-lg">Equity Heatmap</h2>
+                  <select
+                    value={selectedIndex}
+                    onChange={(e) => setSelectedIndex(e.target.value)}
+                    className="px-3 py-1.5 rounded-lg bg-muted/60 border border-border/60 focus:border-primary focus:outline-none text-sm font-medium"
+                  >
+                    {availableIndices.map((idx) => (
+                      <option key={idx} value={idx}>{idx}</option>
+                    ))}
+                  </select>
+                </div>
               </div>
               <div className="flex-1 overflow-auto">
                 <EquityHeatmap data={marketData} />
@@ -164,7 +191,7 @@ useEffect(() => {
                 </div>
               </div>
               <div className="flex-1 overflow-auto">
-                <OIAnalysisTable data={optionsData} />
+                <OIAnalysisTable data={optionsData} underlying={underlyingVal} />
               </div>
             </div>
           </div>
