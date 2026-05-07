@@ -4,14 +4,26 @@ import ErrorBoundary from './components/ErrorBoundary';
 import { Moon, Sun, Activity, BarChart2, TrendingUp, Layers } from 'lucide-react';
 import type { ActiveTab } from './types';
 
+const TAB_STORAGE_KEY = 'nse-active-tab';
+const THEME_STORAGE_KEY = 'nse-terminal-theme';
+
 function App() {
-  // Initialize theme from localStorage or default to 'dark'
+  const storedTab = (): ActiveTab => {
+    try {
+      const saved = localStorage.getItem(TAB_STORAGE_KEY);
+      if (saved && ['overview', 'heatmap', 'options', 'signals'].includes(saved)) {
+        return saved as ActiveTab;
+      }
+    } catch { /* use default */ }
+    return 'overview';
+  };
+
   const [theme, setTheme] = useState<'light' | 'dark'>(() => {
-    const saved = localStorage.getItem('nse-terminal-theme');
+    const saved = localStorage.getItem(THEME_STORAGE_KEY);
     return (saved as 'light' | 'dark') || 'dark';
   });
   
-  const [activeTab, setActiveTab] = useState<ActiveTab>('overview');
+  const [activeTab, setActiveTab] = useState<ActiveTab>(storedTab);
 
   useEffect(() => {
     const root = document.documentElement;
@@ -20,8 +32,12 @@ function App() {
     } else {
       root.classList.remove('dark');
     }
-    localStorage.setItem('nse-terminal-theme', theme);
+    localStorage.setItem(THEME_STORAGE_KEY, theme);
   }, [theme]);
+
+  useEffect(() => {
+    localStorage.setItem(TAB_STORAGE_KEY, activeTab);
+  }, [activeTab]);
 
   const toggleTheme = () => {
     setTheme(prev => prev === 'dark' ? 'light' : 'dark');

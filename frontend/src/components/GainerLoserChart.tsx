@@ -3,6 +3,24 @@ import { createChart, ColorType, HistogramSeries } from 'lightweight-charts';
 import type { IChartApi, ISeriesApi, Time, HistogramData } from 'lightweight-charts';
 import { ArrowUpRight, ArrowDownRight, Activity } from 'lucide-react';
 
+const CHART_STORAGE_KEY = 'nse-chart-stock-count';
+
+const getStoredStockCount = (): number => {
+  try {
+    const saved = localStorage.getItem(CHART_STORAGE_KEY);
+    if (!saved) return 15;
+    const count = parseInt(saved, 10);
+    if (!isNaN(count) && count >= 5 && count <= 25) return count;
+  } catch { /* use default */ }
+  return 15;
+};
+
+const saveStockCount = (count: number) => {
+  try {
+    localStorage.setItem(CHART_STORAGE_KEY, count.toString());
+  } catch { /* storage full or unavailable */ }
+};
+
 interface EquityData {
   Symbol: string;
   LTP: number;
@@ -37,13 +55,19 @@ const GainerLoserChart: React.FC<Props> = ({ data, timestamp }) => {
   const seriesInstance = useRef<ISeriesApi<"Histogram"> | null>(null);
   const resizeRef = useRef<ResizeObserver | null>(null);
   const [tooltipData, setTooltipData] = useState<TooltipDataType | null>(null);
+  const [stockCount, setStockCount] = useState(getStoredStockCount);
+
+  const handleStockCountChange = (newCount: number) => {
+    setStockCount(newCount);
+    saveStockCount(newCount);
+  };
 
   const processedData = useMemo(() => {
     if (!data || data.length === 0) return [];
     
     const sorted = [...data].sort((a, b) => b['% Chg'] - a['% Chg']);
-    const gainers = sorted.slice(0, 15);
-    const losers = sorted.slice(-15);
+    const gainers = sorted.slice(0, stockCount);
+    const losers = sorted.slice(-stockCount);
     
     const combined = [...gainers, ...losers].sort((a, b) => b['% Chg'] - a['% Chg']);
 
@@ -60,7 +84,7 @@ const GainerLoserChart: React.FC<Props> = ({ data, timestamp }) => {
       low: item.Low,
       open: item.Open
     }));
-  }, [data, timestamp]);
+  }, [data, timestamp, stockCount]);
 
   useEffect(() => {
     if (!chartContainerRef.current || processedData.length === 0) return;
@@ -175,6 +199,19 @@ const GainerLoserChart: React.FC<Props> = ({ data, timestamp }) => {
           <h3 className="text-sm font-semibold text-muted-foreground flex items-center gap-2">
             <Activity className="w-4 h-4" /> Market Breadth Overview
           </h3>
+        </div>
+        
+        <div className="absolute top-4 right-4 z-10">
+          <select
+            value={stockCount}
+            onChange={(e) => handleStockCountChange(parseInt(e.target.value))}
+            className="bg-muted/80 border border-border/50 rounded-lg px-2 py-1 text-xs cursor-pointer"
+          >
+            <option value="5">5 stocks</option>
+            <option value="10">10 stocks</option>
+            <option value="15">15 stocks</option>
+            <option value="20">20 stocks</option>
+          </select>
         </div>
         
         {/* Custom HTML Tooltip */}
