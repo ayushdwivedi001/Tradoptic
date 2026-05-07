@@ -6,6 +6,7 @@ import EquityHeatmap from './EquityHeatmap';
 import OIAnalysisTable from './OIAnalysisTable';
 import TradingSignalCard from './TradingSignalCard';
 import MarketBreadthSummary from './MarketBreadthSummary';
+import TrendProjections from './TrendProjections';
 import type { ActiveTab, MarketData, OptionsRow, SignalData, IndexList } from '../types';
 
 const API_BASE_URL = 'http://localhost:8000/api';
@@ -196,7 +197,7 @@ useEffect(() => {
             </div>
           </div>
         );
-      case 'signals':
+case 'signals':
         return (
           <div className="h-full flex flex-col">
             <div className="flex-1 bg-card border border-border rounded-xl shadow-sm flex flex-col overflow-hidden">
@@ -204,7 +205,20 @@ useEffect(() => {
                 <h2 className="font-semibold text-lg">Trading Signals Analysis</h2>
               </div>
               <div className="p-6 flex-1 overflow-auto bg-muted/20">
-                 <TradingSignalCard signals={signals} underlying={underlyingVal} optionsData={optionsData} />
+                  <TradingSignalCard signals={signals} />
+               </div>
+            </div>
+          </div>
+        );
+      case 'projections':
+        return (
+          <div className="h-full flex flex-col">
+            <div className="flex-1 bg-card border border-border rounded-xl shadow-sm flex flex-col overflow-hidden">
+              <div className="px-6 py-4 border-b border-border">
+                <h2 className="font-semibold text-lg">Trend Projections</h2>
+              </div>
+              <div className="p-4 flex-1 overflow-auto">
+                <TrendProjections signals={signals} marketData={marketData} />
               </div>
             </div>
           </div>

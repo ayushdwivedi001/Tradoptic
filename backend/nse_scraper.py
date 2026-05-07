@@ -296,7 +296,7 @@ class NSEScraper:
                 if self.fetch_option_chain_via_dom("NIFTY"):
                     self.calculate_signals("NIFTY")
                 self.last_updated = time.time()
-                time.sleep(60)
+                time.sleep(900)
                 
             if self.browser:
                 try: self.browser.close()

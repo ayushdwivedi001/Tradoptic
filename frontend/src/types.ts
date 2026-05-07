@@ -1,4 +1,4 @@
-export type ActiveTab = 'overview' | 'heatmap' | 'options' | 'signals';
+export type ActiveTab = 'overview' | 'heatmap' | 'options' | 'signals' | 'projections';
 
 export interface MarketData {
   Symbol: string;

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import Dashboard from './components/Dashboard';
 import ErrorBoundary from './components/ErrorBoundary';
-import { Moon, Sun, Activity, BarChart2, TrendingUp, Layers } from 'lucide-react';
+import { Moon, Sun, Activity, BarChart2, TrendingUp, Layers, Zap } from 'lucide-react';
 import type { ActiveTab } from './types';
 
 const TAB_STORAGE_KEY = 'nse-active-tab';
@@ -48,6 +48,7 @@ function App() {
     { id: 'heatmap', label: 'Equity Heatmap', icon: <BarChart2 size={18} /> },
     { id: 'options', label: 'Options Chain', icon: <Layers size={18} /> },
     { id: 'signals', label: 'Trading Signals', icon: <TrendingUp size={18} /> },
+    { id: 'projections', label: 'Trend Projections', icon: <Zap size={18} /> },
   ];
 
   return (
