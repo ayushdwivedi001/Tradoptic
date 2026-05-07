@@ -1,10 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import axios from 'axios';
 import { RefreshCw, AlertCircle, Clock } from 'lucide-react';
 import GainerLoserChart from './GainerLoserChart';
 import EquityHeatmap from './EquityHeatmap';
 import OIAnalysisTable from './OIAnalysisTable';
 import TradingSignalCard from './TradingSignalCard';
+import MarketBreadthSummary from './MarketBreadthSummary';
 import type { ActiveTab, MarketData, OptionsRow, SignalData } from '../types';
 
 const API_BASE_URL = 'http://localhost:8000/api';
@@ -22,6 +23,30 @@ const Dashboard: React.FC<DashboardProps> = ({ activeTab }) => {
   const [error, setError] = useState<string | null>(null);
   const [lastUpdated, setLastUpdated] = useState<string>('');
   const [dataTimestamp, setDataTimestamp] = useState<number>(0);
+
+  const marketBreadth = useMemo(() => {
+    if (marketData.length === 0) return null;
+    
+    const advances = marketData.filter(s => s['% Chg'] > 0).length;
+    const declines = marketData.filter(s => s['% Chg'] < 0).length;
+    const unchanged = marketData.filter(s => s['% Chg'] === 0).length;
+    const totalVolume = marketData.reduce((sum, s) => sum + s.Volume, 0);
+    const totalValue = marketData.reduce((sum, s) => sum + s.Value, 0);
+    const dayHigh = Math.max(...marketData.map(s => s.High));
+    const dayLow = Math.min(...marketData.filter(s => s.Low > 0).map(s => s.Low));
+    const breadthPct = marketData.length > 0 ? (advances / marketData.length) * 100 : 0;
+    
+    return {
+      advances,
+      declines,
+      unchanged,
+      totalVolume,
+      totalValue,
+      dayHigh,
+      dayLow,
+      breadthPct
+    };
+  }, [marketData]);
 
 useEffect(() => {
     let isMounted = true;
@@ -104,6 +129,7 @@ useEffect(() => {
       case 'overview':
         return (
           <div className="h-full flex flex-col space-y-6">
+            <MarketBreadthSummary data={marketBreadth} />
             <div className="flex-1 bg-card border border-border rounded-xl shadow-sm flex flex-col overflow-hidden">
               <div className="px-6 py-4 border-b border-border">
                 <h2 className="font-semibold text-lg">Top Performers</h2>

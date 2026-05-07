@@ -42,8 +42,8 @@ const GainerLoserChart: React.FC<Props> = ({ data, timestamp }) => {
     if (!data || data.length === 0) return [];
     
     const sorted = [...data].sort((a, b) => b['% Chg'] - a['% Chg']);
-    const gainers = sorted.slice(0, 10);
-    const losers = sorted.slice(-10);
+    const gainers = sorted.slice(0, 15);
+    const losers = sorted.slice(-15);
     
     const combined = [...gainers, ...losers].sort((a, b) => b['% Chg'] - a['% Chg']);
 

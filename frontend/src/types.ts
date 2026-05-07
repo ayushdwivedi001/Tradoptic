@@ -33,3 +33,14 @@ export interface SignalData {
   net_oi_diff: number;
   signal: string;
 }
+
+export interface MarketBreadth {
+  advances: number;
+  declines: number;
+  unchanged: number;
+  totalVolume: number;
+  totalValue: number;
+  dayHigh: number;
+  dayLow: number;
+  breadthPct: number;
+}
