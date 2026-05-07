@@ -8,3 +8,5 @@ NSE_cookies.json
 NSE_Live_Terminal.xlsx
 Live_NIFTY50_Data.xlsx
 ~$*.xlsx
+.env
+FrontendIssue.png
