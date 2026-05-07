@@ -92,7 +92,7 @@ Tradoptic uses a **"Jitter-based Background Daemon"**. It fetches broad market d
 
 ### 👨‍💻 Author
 **Ayush Dwivedi**  
-*Full-Stack Developer & Trading Systems Architect*
+*Full-Stack Developer & Agentic AI workflows Expert*
 
 [![LinkedIn](https://img.shields.io/badge/LinkedIn-Profile-blue?logo=linkedin&logoColor=white)](https://www.linkedin.com/in/ayush-dwivedi29/)
 
